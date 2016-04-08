@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 long long calc_fib( int n )
 {
@@ -20,24 +21,38 @@ long long calc_fib( int n )
 }
 
 // reference answer
-long long fib_analytic( int n )
+long double fib_analytic( int n )
 {
   if ( n <= 1 ) return n;
 
   long double ksi = static_cast< long double >( ( 1 + std::sqrt( 5 ) ) / 2 );
   long double phi = static_cast< long double >( -1 / ksi );
 
-  return static_cast< long long >( ( std::pow( ksi, n ) - std::pow( phi, n ) ) / std::sqrt( 5 ) );
+  return static_cast< long double >( ( std::pow( ksi, n ) - std::pow( phi, n ) ) / std::sqrt( 5 ) );
+}
+
+long long fib_table( int n )
+{
+  std::vector< long long > ts( n + 1, 0 );
+  ts[0] = 0;
+  ts[1] = 1;
+
+  for ( int i = 2; i < n + 1; ++i ) {
+    ts[i] = ts[i - 1] + ts[i - 2];
+  }
+
+  return ts.back();
 }
 
 int main()
 {
 // stress test
 #if 1
-  for ( int i = 0; i < 100; ++i ) {
-    int j = rand() % 100 + 2;
+  for ( int i = 0; i < 1000; ++i ) {
+    int j = rand() % 1000 + 2;
     auto a = calc_fib( j );
-    auto b = fib_analytic( j );
+    //auto b = std::floor( fib_analytic( j ) );
+    auto b = fib_table( j );
     if ( a != b ) {
       std::stringstream ss;
       ss << "a: " << a << " b: " << b << "\n";
