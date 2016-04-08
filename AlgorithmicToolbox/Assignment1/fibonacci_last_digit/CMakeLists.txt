@@ -1,0 +1,1 @@
+add_executable(fibonacci_last_digit fibonacci_last_digit.cpp)

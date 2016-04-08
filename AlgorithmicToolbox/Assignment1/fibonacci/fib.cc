@@ -4,6 +4,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+#include <cstdlib>
 
 long long calc_fib( int n )
 {
@@ -49,7 +50,7 @@ int main()
 // stress test
 #if 1
   for ( int i = 0; i < 1000; ++i ) {
-    int j = rand() % 1000 + 2;
+    int j = std::rand() % 1000 + 2;
     auto a = calc_fib( j );
     //auto b = std::floor( fib_analytic( j ) );
     auto b = fib_table( j );
