@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.2)
 
 project(AlgorithmicToolbox)
 
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
-set(CMAKE_CXX_FLAGS "-Wall -Werror -Wno-unused-variable -pipe -O2 -std=c++14")
+if (UNIX)
+    set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
+    set(CMAKE_CXX_FLAGS "-Wall -Werror -Wno-unused-variable -pipe -O2 -std=c++14")
+endif(UNIX)
 
 add_subdirectory(Assignment1/fibonacci)
 add_subdirectory(Assignment1/fibonacci_huge)
