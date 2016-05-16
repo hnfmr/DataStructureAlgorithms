@@ -1,15 +1,39 @@
 #include <algorithm>
 #include <iostream>
-#include <map>
+#include <set>
 #include <vector>
-//#include <stack>
+#include <map>
+#include <stack>
+
+class Node
+{
+public:
+  Node( int v ) : val( v ), children() {}
+
+  Node( const Node &n ) : val( n.val ), children( n.children ) {}
+
+  void add_child( int v ) { children.push_back( v ); }
+
+  int size() const { return children.size(); }
+
+  int val;
+  std::vector< int > children;
+};
 
 class TreeHeight
 {
   int n;
   std::vector< int > parent;
+  std::map<int, Node*> ns;
+  Node* node;
 
 public:
+  ~TreeHeight() {
+    for (const auto& n : ns) {
+      delete n.second;
+    }
+  }
+
   void read()
   {
     std::cin >> n;
@@ -18,60 +42,52 @@ public:
       std::cin >> parent[ i ];
   }
 
+
   int compute_height()
   {
-    // Replace this code with a faster implementation
-    //int maxHeight = 0;
+    construct_tree();
+    return max_depth( node );
+  }
 
-    std::map< int, int > countMap;
+private:
+  int max_depth( Node *n )
+  {
+    if ( n == nullptr )
+      return 0;
 
-    //for (int i = 0; i < parent.size(); ++i)
-    //{
-    //  if (parent[i] == -1)
-    //    countMap[i] = 1;
-    //  else
-    //    countMap[i] = 0;
-    //}
+    if ( n->size() == 0 )
+      return 1;
 
-    int maxHeight = 0;
-    int height = 0;
+    int m = 0;
+    for ( int i = 0; i < n->size(); ++i )
+    {
+      int d = max_depth( ns[ n->children[ i ] ] );
+      if ( d > m )
+        m = d;
+    }
+    return m + 1;
+  }
+
+  void construct_tree()
+  {
     for ( int i = 0; i < n; ++i )
     {
-      int n = parent[ i ];
-      if ( n == -1 )
-        continue;
+      ns[ i ] = new Node( i );
+    }
 
-      int c = 0;
-      int j = n;
+    for ( int i = 0; i < n; ++i )
+    {
+      int p = parent[ i ];
 
-      if ( countMap.find( parent[ n ] ) != countMap.end() )
+      if ( p != -1 )
       {
-        height = countMap[ parent[ n ] ] + 1;
-        //countMap[ parent[ n ] ] = height;
+        ns[ p ]->add_child( i );
       }
       else
       {
-        while ( parent[ j ] != -1 )
-        {
-          j = parent[ j ];
-          ++c;
-        }
-        height = ++c;
-        countMap[ n ] = height;
+        node = ns[ i ];
       }
-
-      if ( height > maxHeight )
-        maxHeight = height;
     }
-
-    //for ( int vertex = 0; vertex < n; vertex++ )
-    //{
-    //  int height = 0;
-    //  for ( int i = vertex; i != -1; i = parent[ i ] )
-    //    height++;
-    //  maxHeight = std::max( maxHeight, height );
-    //}
-    return maxHeight+1;
   }
 };
 
