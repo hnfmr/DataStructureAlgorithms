@@ -36,34 +36,35 @@ public:
 
   Response Process( const Request &request )
   {
-    // write your code here
-    int r = request.arrival_time;
-    while ( !finish_time_.empty() )
+    if ( finish_time_.size() == static_cast< size_t >( size_ ) )
     {
-      int f = finish_time_.front();
-      r -= f;
-      if ( r >= 0 )
+      int start_time = std::max( request.arrival_time, finish_time_.back() );
+      int finish_time = start_time + request.process_time;
+
+      int next = finish_time_.front();
+      int diff = request.arrival_time - next;
+
+      if ( diff >= 0 )
       {
         finish_time_.pop();
+        finish_time_.push( finish_time );
+        return Response( false, start_time );
       }
-      else
-      {
-        break;
-      }
+      return Response( true, -1 );
     }
 
-    if ( finish_time_.size() < size_ )
+    if ( finish_time_.empty() )
     {
       finish_time_.push( request.process_time );
       return Response( false, request.arrival_time );
     }
 
-    if ( r >= 0 )
-    {
-      finish_time_.push( request.process_time );
-      return Response( false, request.arrival_time );
-    }
-    return Response( true, 0 );
+    int start_time = std::max( request.arrival_time, finish_time_.back() );
+    int finish_time = start_time + request.process_time;
+
+    finish_time_.push( finish_time );
+
+    return Response( false, start_time );
   }
 
 private:
