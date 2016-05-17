@@ -1,16 +1,24 @@
 #include <algorithm>
 #include <iostream>
-#include <set>
-#include <vector>
 #include <map>
+#include <set>
 #include <stack>
+#include <vector>
 
 class Node
 {
 public:
-  Node( int v ) : val( v ), children() {}
+  Node( int v )
+    : val( v )
+    , children()
+  {
+  }
 
-  Node( const Node &n ) : val( n.val ), children( n.children ) {}
+  Node( const Node &n )
+    : val( n.val )
+    , children( n.children )
+  {
+  }
 
   void add_child( int v ) { children.push_back( v ); }
 
@@ -24,12 +32,14 @@ class TreeHeight
 {
   int n;
   std::vector< int > parent;
-  std::map<int, Node*> ns;
-  Node* node;
+  std::map< int, Node * > ns;
+  Node *node;
 
 public:
-  ~TreeHeight() {
-    for (const auto& n : ns) {
+  ~TreeHeight()
+  {
+    for ( const auto &n : ns )
+    {
       delete n.second;
     }
   }
@@ -41,7 +51,6 @@ public:
     for ( int i = 0; i < n; i++ )
       std::cin >> parent[ i ];
   }
-
 
   int compute_height()
   {

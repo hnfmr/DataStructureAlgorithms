@@ -5,9 +5,10 @@
 struct Request
 {
   Request( int arrival_time, int process_time )
-    : arrival_time( arrival_time ), process_time( process_time )
+    : arrival_time( arrival_time )
+    , process_time( process_time )
   {
-  } 
+  }
   int arrival_time;
   int process_time;
 };
@@ -15,7 +16,8 @@ struct Request
 struct Response
 {
   Response( bool dropped, int start_time )
-    : dropped( dropped ), start_time( start_time )
+    : dropped( dropped )
+    , start_time( start_time )
   {
   }
 
@@ -26,16 +28,46 @@ struct Response
 class Buffer
 {
 public:
-  Buffer( int size ) : size_( size ), finish_time_() {}
+  Buffer( int size )
+    : size_( size )
+    , finish_time_()
+  {
+  }
 
   Response Process( const Request &request )
   {
     // write your code here
-    return Response( false, 0 );
+    int r = request.arrival_time;
+    while ( !finish_time_.empty() )
+    {
+      int f = finish_time_.front();
+      r -= f;
+      if ( r >= 0 )
+      {
+        finish_time_.pop();
+      }
+      else
+      {
+        break;
+      }
+    }
+
+    if ( finish_time_.size() < size_ )
+    {
+      finish_time_.push( request.process_time );
+      return Response( false, request.arrival_time );
+    }
+
+    if ( r >= 0 )
+    {
+      finish_time_.push( request.process_time );
+      return Response( false, request.arrival_time );
+    }
+    return Response( true, 0 );
   }
 
 private:
-  int size_;
+  const int size_;
   std::queue< int > finish_time_;
 };
 
