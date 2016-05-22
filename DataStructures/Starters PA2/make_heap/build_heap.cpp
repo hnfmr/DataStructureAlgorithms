@@ -27,10 +27,7 @@ class HeapBuilder {
 
   int Parent( size_t i )
   {
-    if ( i == 0 )
-      return 0;
-    else
-      return ( i - 1 ) / 2;
+    return (i-1)/2;
   }
 
   void ReadData() {
