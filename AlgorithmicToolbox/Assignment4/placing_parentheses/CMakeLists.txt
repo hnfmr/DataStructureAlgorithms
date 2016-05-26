@@ -1,0 +1,1 @@
+add_executable(fibonacci fib.cc)

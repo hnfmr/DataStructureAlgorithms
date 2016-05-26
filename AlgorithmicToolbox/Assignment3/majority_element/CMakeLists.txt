@@ -1,0 +1,1 @@
+add_executable(majority_element majority_element.cpp)

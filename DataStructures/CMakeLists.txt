@@ -10,6 +10,11 @@ endif(UNIX)
 add_subdirectory("Starters\ PA1/check_brackets_in_code")
 add_subdirectory("Starters\ PA1/network_packet_processing_simulation")
 add_subdirectory("Starters\ PA1/tree_height")
+
 add_subdirectory("Starters\ PA2/job_queue")
 add_subdirectory("Starters\ PA2/make_heap")
 add_subdirectory("Starters\ PA2/merging_tables")
+
+add_subdirectory("Starters\ PA3/hash_chains")
+add_subdirectory("Starters\ PA3/hash_substring")
+add_subdirectory("Starters\ PA3/phone_book")

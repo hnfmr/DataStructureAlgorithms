@@ -1,0 +1,1 @@
+add_executable(points_and_segments points_and_segments.cpp)

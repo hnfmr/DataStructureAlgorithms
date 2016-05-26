@@ -1,0 +1,1 @@
+add_executable(covering_segments covering_segments.cpp)

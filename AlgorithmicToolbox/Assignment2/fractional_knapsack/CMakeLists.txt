@@ -1,0 +1,1 @@
+add_executable(fractional_knapsack fractional_knapsack.cpp)

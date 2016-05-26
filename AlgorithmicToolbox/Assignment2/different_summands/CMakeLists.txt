@@ -1,0 +1,1 @@
+add_executable(different_summands different_summands.cpp)

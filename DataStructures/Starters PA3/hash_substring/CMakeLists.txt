@@ -1,0 +1,1 @@
+add_executable(hash_substring hash_substring.cpp)
