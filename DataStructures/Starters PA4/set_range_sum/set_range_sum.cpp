@@ -1,6 +1,9 @@
 #include <cstdio>
 #include <iostream>
 #include <sstream>
+#include <vector>
+#include <set>
+
 // Splay tree implementation
 
 // Vertex of a splay tree
@@ -209,10 +212,16 @@ bool find( int x )
 {
   // Implement find yourself
   Vertex *v = find( root, x );
+  splay( root, v );
+
   if ( v == nullptr || v->key != x )
     return false;
-  splay( root, v );
-  return true;
+
+  if ( v->key == x )
+  {
+    return true;
+  }
+  return false;
 }
 
 void erase( int x )
@@ -220,18 +229,16 @@ void erase( int x )
   // Implement erase yourself
 
   Vertex *v = find( root, x );
+  splay( root, v );
 
-  if ( !v || v->key != x )
+  if ( v == nullptr || v->key != x )
     return;
 
   if ( v && v->key == x )
   {
-    splay( root, v );
-    root = merge(root->left, root->right);
-    if (root) {
+    root = merge( root->left, root->right );
+    if ( root )
       root->parent = nullptr;
-    }
-    update( root );
   }
 }
 
@@ -245,11 +252,9 @@ long long sum( int from, int to )
   long long ans = 0;
   update( left );
   update( right );
+  update( middle );
   if ( middle != nullptr )
-  {
-    update( middle );
     ans = middle->sum;
-  }
 
   root = merge( merge( left, middle ), right );
   return ans;
@@ -257,41 +262,80 @@ long long sum( int from, int to )
 
 const int MODULO = 1000000001;
 
+struct Operation {
+  char code; // + - ? s
+  int x; // for +, -, ?
+  int l; // for s l r
+  int r;
+};
+
 int main()
 {
   std::stringstream ss;
 
   int n;
-  scanf( "%d", &n );
+  std::cin >> n;
+
+  std::vector<Operation> ops;
+
+  for (int i = 0; i < n; ++i) {
+    Operation op;
+    char code;
+    std::cin >> code;
+    switch (code) {
+      case 's':
+        {
+          int l, r;
+          std::cin >> l;
+          std::cin >> r;
+          op = {code, -1, l, r};
+        }
+        break;
+      case '+':
+        {
+          int x;
+          std::cin >> x;
+          op = {code, x, -1, -1};
+        }
+        break;
+      case '-':
+        {
+          int x;
+          std::cin >> x;
+          op = {code, x, -1, -1};
+        }
+        break;
+      case '?':
+        {
+          int x;
+          std::cin >> x;
+          op = {code, x, -1, -1};
+        }
+        break;
+      default: break;
+    }
+    ops.push_back(op);
+  }
+
   int last_sum_result = 0;
   for ( int i = 0; i < n; i++ )
   {
-    char buffer[ 10 ];
-    scanf( "%s", buffer );
-    char type = buffer[ 0 ];
-    switch ( type )
+    auto op = ops[ i ];
+    switch ( op.code )
     {
     case '+':
     {
-      int x;
-      scanf( "%d", &x );
-      insert( ( x + last_sum_result ) % MODULO );
+      insert( ( op.x + last_sum_result ) % MODULO );
     }
     break;
     case '-':
     {
-      int x;
-      scanf( "%d", &x );
-      erase( ( x + last_sum_result ) % MODULO );
+      erase( ( op.x + last_sum_result ) % MODULO );
     }
     break;
     case '?':
     {
-      int x;
-      scanf( "%d", &x ); /*
-       printf( find( ( x + last_sum_result ) % MODULO ) ? "Found\n"
-                                                        : "Not found\n" );*/
-      if ( find( ( x + last_sum_result ) % MODULO ) )
+      if ( find( ( op.x + last_sum_result ) % MODULO ) )
         ss << "Found\n";
       else
         ss << "Not found\n";
@@ -299,11 +343,8 @@ int main()
     break;
     case 's':
     {
-      int l, r;
-      scanf( "%d %d", &l, &r );
-      long long res = sum( ( l + last_sum_result ) % MODULO,
-                           ( r + last_sum_result ) % MODULO );
-      // printf( "%lld\n", res );
+      long long res = sum( ( op.l + last_sum_result ) % MODULO,
+                           ( op.r + last_sum_result ) % MODULO );
       ss << res << "\n";
       last_sum_result = int( res % MODULO );
     }
@@ -311,6 +352,62 @@ int main()
   }
 
   std::cout << ss.str();
+#if 0
+  std::string splay1 = ss.str();
 
+  ss = std::stringstream();
+
+  // reference answer
+  last_sum_result = 0;
+  std::set<int> s;
+  for ( int i = 0; i < n; i++ )
+  {
+    auto op = ops[ i ];
+    switch ( op.code )
+    {
+    case '+':
+    {
+      s.insert( ( op.x + last_sum_result ) % MODULO );
+    }
+    break;
+    case '-':
+    {
+      s.erase( ( op.x + last_sum_result ) % MODULO );
+    }
+    break;
+    case '?':
+    {
+      if ( s.find( ( op.x + last_sum_result ) % MODULO ) != s.end() )
+        ss << "Found\n";
+      else
+        ss << "Not found\n";
+    }
+    break;
+    case 's':
+    {
+      long long res = 0;
+      for (auto it = s.begin(); it != s.end(); ++it) {
+        if ( *it >= ( ( op.l + last_sum_result ) % MODULO ) &&
+             *it <= ( ( op.r + last_sum_result ) % MODULO ) )
+          res += *it;
+      }
+      ss << res << "\n";
+      last_sum_result = int( res % MODULO );
+    }
+    }
+  }
+
+  std::string splay2 = ss.str();
+
+  std::cout << "SPLAY1\n"
+    << splay1 << "\n";
+  std::cout << "SPLAY2\n"
+    << splay2 << "\n";
+
+  if (splay1 != splay2) {
+    std::cerr << "######################################## DIFF\n";
+  }
+
+#endif
   return 0;
 }
