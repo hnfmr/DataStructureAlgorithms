@@ -1,5 +1,6 @@
 #include <cstdio>
-
+#include <iostream>
+#include <sstream>
 // Splay tree implementation
 
 // Vertex of a splay tree
@@ -204,16 +205,34 @@ void insert( int x )
   root = merge( merge( left, new_vertex ), right );
 }
 
-void erase( int x )
-{
-  // Implement erase yourself
-}
-
 bool find( int x )
 {
   // Implement find yourself
+  Vertex *v = find( root, x );
+  if ( v == nullptr || v->key != x )
+    return false;
+  splay( root, v );
+  return true;
+}
 
-  return false;
+void erase( int x )
+{
+  // Implement erase yourself
+
+  Vertex *v = find( root, x );
+
+  if ( !v || v->key != x )
+    return;
+
+  if ( v && v->key == x )
+  {
+    splay( root, v );
+    root = merge(root->left, root->right);
+    if (root) {
+      root->parent = nullptr;
+    }
+    update( root );
+  }
 }
 
 long long sum( int from, int to )
@@ -224,8 +243,15 @@ long long sum( int from, int to )
   split( root, from, left, middle );
   split( middle, to + 1, middle, right );
   long long ans = 0;
-  // Complete the implementation of sum
+  update( left );
+  update( right );
+  if ( middle != nullptr )
+  {
+    update( middle );
+    ans = middle->sum;
+  }
 
+  root = merge( merge( left, middle ), right );
   return ans;
 }
 
@@ -233,6 +259,8 @@ const int MODULO = 1000000001;
 
 int main()
 {
+  std::stringstream ss;
+
   int n;
   scanf( "%d", &n );
   int last_sum_result = 0;
@@ -260,9 +288,13 @@ int main()
     case '?':
     {
       int x;
-      scanf( "%d", &x );
-      printf( find( ( x + last_sum_result ) % MODULO ) ? "Found\n"
-                                                       : "Not found\n" );
+      scanf( "%d", &x ); /*
+       printf( find( ( x + last_sum_result ) % MODULO ) ? "Found\n"
+                                                        : "Not found\n" );*/
+      if ( find( ( x + last_sum_result ) % MODULO ) )
+        ss << "Found\n";
+      else
+        ss << "Not found\n";
     }
     break;
     case 's':
@@ -271,10 +303,14 @@ int main()
       scanf( "%d %d", &l, &r );
       long long res = sum( ( l + last_sum_result ) % MODULO,
                            ( r + last_sum_result ) % MODULO );
-      printf( "%lld\n", res );
+      // printf( "%lld\n", res );
+      ss << res << "\n";
       last_sum_result = int( res % MODULO );
     }
     }
   }
+
+  std::cout << ss.str();
+
   return 0;
 }
