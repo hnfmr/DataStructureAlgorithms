@@ -1,0 +1,1 @@
+add_executable(connected_components connected_components.cpp)
