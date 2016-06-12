@@ -9,3 +9,6 @@ endif(UNIX)
 
 add_subdirectory("reachability")
 add_subdirectory("connected_components")
+add_subdirectory("acyclicity")
+add_subdirectory("strongly_connected")
+add_subdirectory("topsort")
