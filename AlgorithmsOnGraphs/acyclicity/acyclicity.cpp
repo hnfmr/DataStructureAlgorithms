@@ -5,12 +5,16 @@
 using std::vector;
 using std::pair;
 
-bool isCyclic(vector<vector<int>>& adj, int v, vector<bool>& visited, vector<bool>& recStack) {
-  if (visited[v] == false) {
-    visited[v] = true;
-    recStack[v] = true;
+bool isCyclic( vector< vector< int > > &adj, int v, vector< bool > &visited,
+               vector< bool > &recStack )
+{
+  if ( visited[ v ] == false )
+  {
+    visited[ v ] = true;
+    recStack[ v ] = true;
 
-    for (int i = 0; i < adj[v].size(); ++i) {
+    for ( size_t i = 0; i < adj[ v ].size(); ++i )
+    {
       if ( !visited[ adj[ v ][ i ] ] &&
            isCyclic( adj, adj[ v ][ i ], visited, recStack ) )
         return true;
@@ -19,21 +23,23 @@ bool isCyclic(vector<vector<int>>& adj, int v, vector<bool>& visited, vector<boo
     }
   }
 
-  recStack[v] = false;
+  recStack[ v ] = false;
   return false;
 }
 
-int acyclic( vector< vector< int > > &adj)
+int acyclic( vector< vector< int > > &adj )
 {
   // write your code here
   if ( adj.empty() )
     return 0;
 
-  std::vector< bool > visited(adj.size(), false );
+  std::vector< bool > visited( adj.size(), false );
   std::vector< bool > recStack( adj.size(), false );
 
-  for (int i = 0; i < adj.size(); ++i) {
-    if (isCyclic(adj, i, visited, recStack)) return 1;
+  for ( size_t i = 0; i < adj.size(); ++i )
+  {
+    if ( isCyclic( adj, i, visited, recStack ) )
+      return 1;
   }
   return 0;
 }
