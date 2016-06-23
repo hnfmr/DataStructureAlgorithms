@@ -1,13 +1,77 @@
 #include <iostream>
 #include <vector>
 #include <queue>
+#include <unordered_map>
 
 using std::vector;
 using std::queue;
 
-int bipartite(vector<vector<int> > &adj) {
+
+enum class Color {
+  blue, red, nocolor
+};
+
+Color flip(Color c) {
+  if (c == Color::blue) return Color::red;
+  if (c == Color::red) return Color::blue;
+
+  return Color::nocolor;
+}
+
+bool bfs( vector< vector< int > > &adj )
+{
+  std::unordered_map< int, Color > color;
+
+  for ( size_t i = 0; i < adj.size(); ++i )
+  {
+    color[ i ] = Color::nocolor;
+  }
+
+  for ( size_t s = 0; s < adj.size(); ++s )
+  {
+    if ( color[ s ] != Color::nocolor )
+      continue;
+
+    std::queue< int > q;
+
+    q.push( s );
+    color[ s ] = Color::blue;
+
+    while ( !q.empty() )
+    {
+      int u = q.front();
+      q.pop();
+      const auto &es = adj[ u ];
+
+      for ( int e : es )
+      {
+        if ( color[ e ] == Color::nocolor )
+        {
+          q.push( e );
+        }
+        color[ e ] = flip( color[ u ] );
+      }
+    }
+  }
+
+  for ( size_t i = 0; i < adj.size(); ++i )
+  {
+    const auto &es = adj[ i ];
+    Color c = color[ i ];
+    for ( int e : es )
+    {
+      Color bc = color[ e ];
+      if ( c == bc )
+        return false;
+    }
+  }
+  return true;
+}
+
+int bipartite( vector< vector< int > > &adj )
+{
   //write your code here
-  return -1;
+  return bfs( adj );
 }
 
 int main() {
