@@ -1,0 +1,1 @@
+add_executable(negative_cycle negative_cycle.cpp)
