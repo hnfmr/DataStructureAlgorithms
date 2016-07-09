@@ -20,27 +20,12 @@ int distance(vector<vector<int> > &adj, vector<vector<int> > &cost, int s, int t
 
   dist[ s ] = 0;
 
-  auto cmp = [&dist]( int left, int right ) { return dist[ left ] < dist[ right ]; };
+  auto cmp = [&dist]( int left, int right ) { return dist[ left ] > dist[ right ]; };
   std::priority_queue< int, std::vector< int >, decltype( cmp ) > h( cmp );
 
   for (size_t i = 0; i < adj.size(); ++i) {
     h.push( i );
   }
-
-  auto getCost = [&adj, &cost]( int u, int v ) {
-    int pos = -1;
-    const auto &es = adj[ u ];
-    for ( size_t i = 0; i < es.size(); ++i )
-    {
-      if ( es[ i ] == v )
-      {
-        pos = i;
-        break;
-      }
-    }
-
-    return cost[ u ][ pos ];
-  };
 
   while (!h.empty()) {
     int u = h.top();
@@ -48,7 +33,7 @@ int distance(vector<vector<int> > &adj, vector<vector<int> > &cost, int s, int t
 
     const auto& edges = adj[u];
     for (auto v : edges) {
-      int w = getCost(u, v);
+      int w = cost[u][v];
       if ( dist[ v ] == std::numeric_limits< int >::max() )
       {
         dist[ v ] = dist[ u ] + w;
@@ -71,9 +56,9 @@ int distance(vector<vector<int> > &adj, vector<vector<int> > &cost, int s, int t
   int sum = 0;
   while ( tmp != s )
   {
-    if (tmp == -1) return -1;
-
-    int w = getCost( prev[ tmp ], tmp );
+    if (tmp == -1 || prev[tmp] == -1) return -1;
+    int w = cost[prev[tmp]][tmp];
+    if (w == -1) return -1;
     sum += w;
     tmp = prev[ tmp ];
   }
@@ -85,16 +70,19 @@ int main()
   int n, m;
   std::cin >> n >> m;
   vector< vector< int > > adj( n, vector< int >() );
-  vector< vector< int > > cost( n, vector< int >() );
+  vector< vector< int > > cost( n, vector< int >( n, -1 ) );
+
   for ( int i = 0; i < m; i++ )
   {
     int x, y, w;
     std::cin >> x >> y >> w;
     adj[ x - 1 ].push_back( y - 1 );
-    cost[ x - 1 ].push_back( w );
+    //cost[ x - 1 ].push_back( w );
+    cost[x - 1][y - 1] = w;
   }
   int s, t;
   std::cin >> s >> t;
   s--, t--;
   std::cout << distance( adj, cost, s, t );
+  return 0;
 }
