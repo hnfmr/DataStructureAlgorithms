@@ -11,8 +11,8 @@ using std::pair;
 
 int distance(vector<vector<int> > &adj, vector<vector<int> > &cost, int s, int t) {
   //write your code her
-  std::unordered_map< int, int > dist;
-  std::vector< int > prev( adj.size(), -1 );
+  std::unordered_map< int, long long > dist;
+  std::vector< long long > prev( adj.size(), -1 );
   for ( size_t i = 0; i < adj.size(); ++i )
   {
     dist[ i ] = std::numeric_limits<int>::max();
