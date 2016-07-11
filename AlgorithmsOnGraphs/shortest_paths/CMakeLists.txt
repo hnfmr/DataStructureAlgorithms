@@ -1,0 +1,1 @@
+add_executable(shortest_paths shortest_paths.cpp)
