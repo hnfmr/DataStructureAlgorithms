@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <tuple>
+#include <functional>
 
 using std::vector;
 using std::unordered_map;
@@ -91,10 +92,10 @@ negative_cycle( vector< vector< int > > &adj, vector< vector< int > > &cost,
   return std::make_tuple( false, dist, -1, -1 );
 }
 
-int get_distance( vector< vector< int > > &adj, vector< vector< int > > &cost,
-                  int s, int t )
+std::tuple< unordered_map< int, Node >, vector< long long > >
+get_distance( const vector< vector< int > > &adj,
+              const vector< vector< int > > &cost, int s )
 {
-  // write your code her
   std::unordered_map< int, Node > dist;
   std::vector< long long > prev( adj.size(), -1 );
   for ( size_t i = 0; i < adj.size(); ++i )
@@ -107,6 +108,7 @@ int get_distance( vector< vector< int > > &adj, vector< vector< int > > &cost,
   auto cmp = [&dist]( int left, int right ) {
     return dist[ left ] > dist[ right ];
   };
+
   std::priority_queue< int, std::vector< int >, decltype( cmp ) > h( cmp );
 
   for ( size_t i = 0; i < adj.size(); ++i )
@@ -132,19 +134,7 @@ int get_distance( vector< vector< int > > &adj, vector< vector< int > > &cost,
     }
   }
 
-  int tmp = t;
-  int sum = 0;
-  while ( tmp != s )
-  {
-    if ( tmp == -1 || prev[ tmp ] == -1 )
-      return -1;
-    int w = cost[ prev[ tmp ] ][ tmp ];
-    if ( w == -1 )
-      return -1;
-    sum += 1;
-    tmp = prev[ tmp ];
-  }
-  return sum;
+  return std::make_tuple( dist, prev );
 }
 
 void explore( const vector< vector< int > > &adj, vector< bool > &visited,
@@ -187,6 +177,31 @@ void shortest_paths( vector< vector< int > > &adj,
   int negV = -1;
   std::tie( negCycle, dist, negU, negV ) = negative_cycle( adj, cost, s );
 
+  unordered_map< int, Node > dist0;
+  vector< long long > prev0;
+  std::function<int(int,int)> get_dist0;
+
+  if ( !negCycle )
+  {
+    std::tie( dist0, prev0 ) = get_distance( adj, cost, s );
+
+    get_dist0 = [&dist0, &prev0, &cost]( int u, int v ) {
+      int tmp = v;
+      int sum = 0;
+      while ( tmp != u )
+      {
+        if ( tmp == -1 || prev0[ tmp ] == -1 )
+          return -1;
+        int w = cost[ prev0[ tmp ] ][ tmp ];
+        if ( w == -1 )
+          return -1;
+        sum += 1;
+        tmp = prev0[ tmp ];
+      }
+      return sum;
+    };
+  }
+
   for ( size_t i = 0; i < adj.size(); ++i )
   {
     if ( i == s )
@@ -218,7 +233,7 @@ void shortest_paths( vector< vector< int > > &adj,
       }
       else
       {
-        distance[ i ] = get_distance( adj, cost, s, u );
+        distance[ i ] = get_dist0( s, i );
       }
     }
   }
