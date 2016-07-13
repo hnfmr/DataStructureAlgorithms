@@ -1,11 +1,11 @@
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <queue>
+#include <set>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
-#include <tuple>
-#include <functional>
-#include <set>
 
 using std::vector;
 using std::unordered_map;
@@ -21,7 +21,7 @@ struct Node
   int val;
 };
 
-Node operator+( const Node &n, int c )
+inline Node operator+( const Node &n, int c )
 {
   if ( n.isinf )
     return Node();
@@ -29,7 +29,7 @@ Node operator+( const Node &n, int c )
   return Node( n.val + c );
 }
 
-bool operator>( const Node &l, const Node &r )
+inline bool operator>( const Node &l, const Node &r )
 {
   if ( !l.isinf && !r.isinf )
     return l.val > r.val;
@@ -39,9 +39,9 @@ bool operator>( const Node &l, const Node &r )
     return false;
 }
 
-bool try_relax( int u, int v, const vector< int > &,
-                const unordered_map< int, Node > &dist,
-                const vector< vector< int > > &cost )
+inline bool try_relax( int u, int v, const vector< int > &,
+                       const unordered_map< int, Node > &dist,
+                       const vector< vector< int > > &cost )
 {
   auto new_w = dist.at( u ) + cost[ u ][ v ];
   if ( dist.at( v ) > new_w )
@@ -51,21 +51,23 @@ bool try_relax( int u, int v, const vector< int > &,
   return false;
 }
 
-void relax( int u, int v, vector< int> &prev,
-            unordered_map< int, Node > &dist,
-            const vector< vector< int > > &cost )
+inline bool relax( int u, int v, vector< int > &prev,
+                   unordered_map< int, Node > &dist,
+                   const vector< vector< int > > &cost )
 {
   auto new_w = dist[ u ] + cost[ u ][ v ];
   if ( dist[ v ] > new_w )
   {
     dist[ v ] = new_w;
     prev[ v ] = u;
+    return true;
   }
+  return false;
 }
 
 std::tuple< bool, unordered_map< int, Node >, vector< int > >
 bellman_ford( vector< vector< int > > &adj, vector< vector< int > > &cost,
-                int s )
+              int s )
 {
   std::unordered_map< int, Node > dist;
   std::vector< int > prev( adj.size(), -1 );
@@ -79,15 +81,18 @@ bellman_ford( vector< vector< int > > &adj, vector< vector< int > > &cost,
   int V = adj.size();
   for ( int i = 0; i < V - 1; ++i )
   {
+    bool changed = false;
     for ( size_t j = 0; j < adj.size(); ++j )
     {
       int u = j;
       const auto &es = adj[ u ];
       for ( int v : es )
       {
-        relax( u, v, prev, dist, cost );
+        changed |= relax( u, v, prev, dist, cost );
       }
     }
+    if ( !changed )
+      break;
   }
 
   for ( size_t j = 0; j < adj.size(); ++j )
@@ -100,21 +105,21 @@ bellman_ford( vector< vector< int > > &adj, vector< vector< int > > &cost,
         return std::make_tuple( true, dist, prev );
     }
   }
-  return std::make_tuple( false, dist, prev);
+  return std::make_tuple( false, dist, prev );
 }
 
 std::tuple< unordered_map< int, Node >, vector< int > >
 dijkstra( const vector< vector< int > > &adj,
-              const vector< vector< int > > &cost, int s )
+          const vector< vector< int > > &cost, int s )
 {
   std::unordered_map< int, Node > dist;
   std::vector< int > prev( adj.size(), -1 );
   for ( size_t i = 0; i < adj.size(); ++i )
   {
-    dist[ i ] =  Node();
+    dist[ i ] = Node();
   }
 
-  dist[ s ] = Node(0);
+  dist[ s ] = Node( 0 );
 
   auto cmp = [&dist]( int left, int right ) {
     return dist[ left ] > dist[ right ];
@@ -181,40 +186,38 @@ void shortest_paths( vector< vector< int > > &adj,
                      vector< long long > &distance, vector< int > &reachable,
                      vector< int > &shortest )
 {
-  // write your code here
   bool negCycle = false;
   unordered_map< int, Node > dist;
-  vector<int> prev;
-  std::tie( negCycle, dist, prev) = bellman_ford( adj, cost, s );
+  vector< int > prev;
+  std::tie( negCycle, dist, prev ) = bellman_ford( adj, cost, s );
 
   auto get_dist0 = [&cost]( const vector< int > &prev, int u,
-                         int v ) -> long long {
-      int tmp = v;
-      long long sum = 0;
-      while ( tmp != u )
-      {
-        if ( tmp == -1 || prev[ tmp ] == -1 )
-          return -1;
-        int w = cost[ prev[ tmp ] ][ tmp ];
-        if ( w == -1 )
-          return -1;
-        sum += w;
-        tmp = prev[ tmp ];
-      }
-      return sum;
-    };
+                            int v ) -> long long {
+    int tmp = v;
+    long long sum = 0;
+    while ( tmp != u )
+    {
+      if ( tmp == -1 || prev[ tmp ] == -1 )
+        return -1;
+      int w = cost[ prev[ tmp ] ][ tmp ];
+      if ( w == -1 )
+        return -1;
+      sum += w;
+      tmp = prev[ tmp ];
+    }
+    return sum;
+  };
 
   unordered_map< int, Node > dist0;
   vector< int > prev0;
 
-  std::set<int> cycles;
+  std::set< int > cycles;
   if ( !negCycle )
   {
     std::tie( dist0, prev0 ) = dijkstra( adj, cost, s );
   }
   else
   {
-    std::set< int > cycles;
     int startPoint = -1;
     for ( size_t j = 0; j < adj.size(); ++j )
     {
@@ -222,7 +225,8 @@ void shortest_paths( vector< vector< int > > &adj,
       const auto &es = adj[ u ];
       for ( int v : es )
       {
-        if ( try_relax( u, v, prev, dist, cost ) ) {
+        if ( try_relax( u, v, prev, dist, cost ) )
+        {
           startPoint = u;
           break;
         }
@@ -241,10 +245,6 @@ void shortest_paths( vector< vector< int > > &adj,
     }
   }
 
-  std::vector< bool > visited( adj.size(), false );
-
-  explore( adj, visited, s );
-
   for ( size_t i = 0; i < adj.size(); ++i )
   {
     if ( i == s )
@@ -254,25 +254,27 @@ void shortest_paths( vector< vector< int > > &adj,
       continue;
     }
 
-    int r = visited[ i ];
+    int r = -1;
+
+    if ( negCycle )
+      r = dist[ i ].isinf ? 0 : 1;
+    else
+      r = dist0[ i ].isinf ? 0 : 1;
+
     reachable[ i ] = r;
 
     if ( r == 1 )
     {
       if ( negCycle )
       {
-        // two cases
-        // case 1: if u is not in the cycle path
-        //if ( reach( adj, negV, i ) == 0 )
         if ( cycles.find( i ) == cycles.end() )
         {
           distance[ i ] = get_dist0( prev, s, i );
         }
-        else {
+        else
+        {
           shortest[ i ] = 0;
         }
-        //
-        // case 2: if u is in inside 
       }
       else
       {
@@ -286,8 +288,10 @@ int main()
 {
   int n, m, s;
   std::cin >> n >> m;
+
   vector< vector< int > > adj( n, vector< int >() );
   vector< vector< int > > cost( n, vector< int >( n, -1 ) );
+
   for ( int i = 0; i < m; i++ )
   {
     int x, y, w;
