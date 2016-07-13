@@ -187,8 +187,6 @@ void shortest_paths( vector< vector< int > > &adj,
   int negV = -1;
   std::tie( negCycle, dist, negU, negV ) = negative_cycle( adj, cost, s );
 
-  std::cout << "Negative cycle detected with Source: " << s << "\n";
-
   for ( size_t i = 0; i < adj.size(); ++i )
   {
     if ( i == s )
