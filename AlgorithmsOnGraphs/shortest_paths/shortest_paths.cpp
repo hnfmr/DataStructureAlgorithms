@@ -179,15 +179,15 @@ void shortest_paths( vector< vector< int > > &adj,
 
   unordered_map< int, Node > dist0;
   vector< long long > prev0;
-  std::function<int(int,int)> get_dist0;
+  std::function< long long( int, int ) > get_dist0;
 
   if ( !negCycle )
   {
     std::tie( dist0, prev0 ) = get_distance( adj, cost, s );
 
-    get_dist0 = [&dist0, &prev0, &cost]( int u, int v ) {
+    get_dist0 = [&dist0, &prev0, &cost]( int u, int v ) -> long long {
       int tmp = v;
-      int sum = 0;
+      long long sum = 0;
       while ( tmp != u )
       {
         if ( tmp == -1 || prev0[ tmp ] == -1 )
@@ -195,7 +195,7 @@ void shortest_paths( vector< vector< int > > &adj,
         int w = cost[ prev0[ tmp ] ][ tmp ];
         if ( w == -1 )
           return -1;
-        sum += 1;
+        sum += w;
         tmp = prev0[ tmp ];
       }
       return sum;
