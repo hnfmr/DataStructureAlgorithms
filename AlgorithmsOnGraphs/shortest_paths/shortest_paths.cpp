@@ -3,6 +3,7 @@
 #include <queue>
 #include <unordered_map>
 #include <vector>
+#include <tuple>
 
 using std::vector;
 using std::unordered_map;
@@ -10,11 +11,37 @@ using std::priority_queue;
 using std::queue;
 using std::pair;
 
+struct Node
+{
+  Node() : isinf( true ), val( 0 ) {}
+  explicit Node( int val ) : isinf( false ), val( val ) {}
+  bool isinf;
+  int val;
+};
+
+Node operator+( const Node &n, int c )
+{
+  if ( n.isinf )
+    return Node();
+
+  return Node( n.val + c );
+}
+
+bool operator>( const Node &l, const Node &r )
+{
+  if ( !l.isinf && !r.isinf )
+    return l.val > r.val;
+  else if ( l.isinf )
+    return true;
+  else
+    return false;
+}
+
 bool relax( int u, int v, vector< long long > &prev,
-            unordered_map< int, long long > &dist,
+            unordered_map< int, Node > &dist,
             const vector< vector< int > > &cost )
 {
-  long long new_w = dist[ u ] + cost[ u ][ v ];
+  auto new_w = dist[ u ] + cost[ u ][ v ];
   if ( dist[ v ] > new_w )
   {
     dist[ v ] = new_w;
@@ -24,17 +51,18 @@ bool relax( int u, int v, vector< long long > &prev,
   return false;
 }
 
-int negative_cycle( vector< vector< int > > &adj, vector< vector< int > > &cost,
-                    int s )
+std::tuple< bool, unordered_map< int, Node >, int, int >
+negative_cycle( vector< vector< int > > &adj, vector< vector< int > > &cost,
+                int s )
 {
-  std::unordered_map< int, long long > dist;
+  std::unordered_map< int, Node > dist;
   std::vector< long long > prev( adj.size(), -1 );
   for ( size_t i = 0; i < adj.size(); ++i )
   {
-    dist[ i ] = std::numeric_limits< int >::max();
+    dist[ i ] = Node();
   }
 
-  dist[ s ] = 0;
+  dist[ s ] = Node( 0 );
 
   int V = adj.size();
   for ( int i = 0; i < V - 1; ++i )
@@ -57,24 +85,24 @@ int negative_cycle( vector< vector< int > > &adj, vector< vector< int > > &cost,
     for ( int v : es )
     {
       if ( relax( u, v, prev, dist, cost ) )
-        return 1;
+        return std::make_tuple( true, dist, u, v );
     }
   }
-  return 0;
+  return std::make_tuple( false, dist, -1, -1 );
 }
 
 int get_distance( vector< vector< int > > &adj, vector< vector< int > > &cost,
                   int s, int t )
 {
   // write your code her
-  std::unordered_map< int, long long > dist;
+  std::unordered_map< int, Node > dist;
   std::vector< long long > prev( adj.size(), -1 );
   for ( size_t i = 0; i < adj.size(); ++i )
   {
-    dist[ i ] = std::numeric_limits< int >::max();
+    dist[ i ] =  Node();
   }
 
-  dist[ s ] = 0;
+  dist[ s ] = Node(0);
 
   auto cmp = [&dist]( int left, int right ) {
     return dist[ left ] > dist[ right ];
@@ -95,20 +123,11 @@ int get_distance( vector< vector< int > > &adj, vector< vector< int > > &cost,
     for ( auto v : edges )
     {
       int w = cost[ u ][ v ];
-      if ( dist[ v ] == std::numeric_limits< int >::max() )
+      if ( dist[ v ] > ( dist[ u ] + w ) )
       {
         dist[ v ] = dist[ u ] + w;
         prev[ v ] = u;
         h.push( v );
-      }
-      else
-      {
-        if ( dist[ v ] > ( dist[ u ] + w ) )
-        {
-          dist[ v ] = dist[ u ] + w;
-          prev[ v ] = u;
-          h.push( v );
-        }
       }
     }
   }
@@ -162,8 +181,13 @@ void shortest_paths( vector< vector< int > > &adj,
                      vector< int > &shortest )
 {
   // write your code here
-  // test reachability
-  bool negCycle = negative_cycle( adj, cost, s ) == 1;
+  bool negCycle = false;
+  unordered_map< int, Node > dist;
+  int negU = -1;
+  int negV = -1;
+  std::tie( negCycle, dist, negU, negV ) = negative_cycle( adj, cost, s );
+
+  std::cout << "Negative cycle detected with Source: " << s << "\n";
 
   for ( size_t i = 0; i < adj.size(); ++i )
   {
@@ -176,18 +200,27 @@ void shortest_paths( vector< vector< int > > &adj,
 
     int u = i;
     int r = reach( adj, s, u );
+    reachable[ i ] = r;
 
     if ( r == 1 )
     {
-      reachable[ i ] = r;
-
       if ( negCycle )
       {
-        distance[ i ] = get_distance( adj, cost, s, u );
+        // two cases
+        // case 1: if u is not in the cycle path
+        if ( reach( adj, negV, u ) == 0 )
+        {
+          distance[ i ] = dist[ u ].val;
+        }
+        else {
+          shortest[ i ] = 0;
+        }
+        //
+        // case 2: if u is in inside 
       }
       else
       {
-        shortest[ i ] = 0;
+        distance[ i ] = get_distance( adj, cost, s, u );
       }
     }
   }
