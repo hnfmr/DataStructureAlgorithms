@@ -202,6 +202,10 @@ void shortest_paths( vector< vector< int > > &adj,
     };
   }
 
+  std::vector< bool > visited( adj.size(), false );
+
+  explore( adj, visited, s );
+
   for ( size_t i = 0; i < adj.size(); ++i )
   {
     if ( i == s )
@@ -211,8 +215,7 @@ void shortest_paths( vector< vector< int > > &adj,
       continue;
     }
 
-    int u = i;
-    int r = reach( adj, s, u );
+    int r = visited[ i ];
     reachable[ i ] = r;
 
     if ( r == 1 )
@@ -221,9 +224,9 @@ void shortest_paths( vector< vector< int > > &adj,
       {
         // two cases
         // case 1: if u is not in the cycle path
-        if ( reach( adj, negV, u ) == 0 )
+        if ( reach( adj, negV, i ) == 0 )
         {
-          distance[ i ] = dist[ u ].val;
+          distance[ i ] = dist[ i ].val;
         }
         else {
           shortest[ i ] = 0;
