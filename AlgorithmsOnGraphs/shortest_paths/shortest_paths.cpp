@@ -5,6 +5,7 @@
 #include <vector>
 #include <tuple>
 #include <functional>
+#include <set>
 
 using std::vector;
 using std::unordered_map;
@@ -38,7 +39,19 @@ bool operator>( const Node &l, const Node &r )
     return false;
 }
 
-bool relax( int u, int v, vector< long long > &prev,
+bool try_relax( int u, int v, const vector< int > &,
+                const unordered_map< int, Node > &dist,
+                const vector< vector< int > > &cost )
+{
+  auto new_w = dist.at( u ) + cost[ u ][ v ];
+  if ( dist.at( v ) > new_w )
+  {
+    return true;
+  }
+  return false;
+}
+
+void relax( int u, int v, vector< int> &prev,
             unordered_map< int, Node > &dist,
             const vector< vector< int > > &cost )
 {
@@ -47,17 +60,15 @@ bool relax( int u, int v, vector< long long > &prev,
   {
     dist[ v ] = new_w;
     prev[ v ] = u;
-    return true;
   }
-  return false;
 }
 
-std::tuple< bool, unordered_map< int, Node >, int, int >
-negative_cycle( vector< vector< int > > &adj, vector< vector< int > > &cost,
+std::tuple< bool, unordered_map< int, Node >, vector< int > >
+bellman_ford( vector< vector< int > > &adj, vector< vector< int > > &cost,
                 int s )
 {
   std::unordered_map< int, Node > dist;
-  std::vector< long long > prev( adj.size(), -1 );
+  std::vector< int > prev( adj.size(), -1 );
   for ( size_t i = 0; i < adj.size(); ++i )
   {
     dist[ i ] = Node();
@@ -85,19 +96,19 @@ negative_cycle( vector< vector< int > > &adj, vector< vector< int > > &cost,
     const auto &es = adj[ u ];
     for ( int v : es )
     {
-      if ( relax( u, v, prev, dist, cost ) )
-        return std::make_tuple( true, dist, u, v );
+      if ( try_relax( u, v, prev, dist, cost ) )
+        return std::make_tuple( true, dist, prev );
     }
   }
-  return std::make_tuple( false, dist, -1, -1 );
+  return std::make_tuple( false, dist, prev);
 }
 
-std::tuple< unordered_map< int, Node >, vector< long long > >
-get_distance( const vector< vector< int > > &adj,
+std::tuple< unordered_map< int, Node >, vector< int > >
+dijkstra( const vector< vector< int > > &adj,
               const vector< vector< int > > &cost, int s )
 {
   std::unordered_map< int, Node > dist;
-  std::vector< long long > prev( adj.size(), -1 );
+  std::vector< int > prev( adj.size(), -1 );
   for ( size_t i = 0; i < adj.size(); ++i )
   {
     dist[ i ] =  Node();
@@ -173,33 +184,61 @@ void shortest_paths( vector< vector< int > > &adj,
   // write your code here
   bool negCycle = false;
   unordered_map< int, Node > dist;
-  int negU = -1;
-  int negV = -1;
-  std::tie( negCycle, dist, negU, negV ) = negative_cycle( adj, cost, s );
+  vector<int> prev;
+  std::tie( negCycle, dist, prev) = bellman_ford( adj, cost, s );
 
-  unordered_map< int, Node > dist0;
-  vector< long long > prev0;
-  std::function< long long( int, int ) > get_dist0;
-
-  if ( !negCycle )
-  {
-    std::tie( dist0, prev0 ) = get_distance( adj, cost, s );
-
-    get_dist0 = [&dist0, &prev0, &cost]( int u, int v ) -> long long {
+  auto get_dist0 = [&cost]( const vector< int > &prev, int u,
+                         int v ) -> long long {
       int tmp = v;
       long long sum = 0;
       while ( tmp != u )
       {
-        if ( tmp == -1 || prev0[ tmp ] == -1 )
+        if ( tmp == -1 || prev[ tmp ] == -1 )
           return -1;
-        int w = cost[ prev0[ tmp ] ][ tmp ];
+        int w = cost[ prev[ tmp ] ][ tmp ];
         if ( w == -1 )
           return -1;
         sum += w;
-        tmp = prev0[ tmp ];
+        tmp = prev[ tmp ];
       }
       return sum;
     };
+
+  unordered_map< int, Node > dist0;
+  vector< int > prev0;
+
+  std::set<int> cycles;
+  if ( !negCycle )
+  {
+    std::tie( dist0, prev0 ) = dijkstra( adj, cost, s );
+  }
+  else
+  {
+    std::set< int > cycles;
+    int startPoint = -1;
+    for ( size_t j = 0; j < adj.size(); ++j )
+    {
+      int u = j;
+      const auto &es = adj[ u ];
+      for ( int v : es )
+      {
+        if ( try_relax( u, v, prev, dist, cost ) ) {
+          startPoint = u;
+          break;
+        }
+      }
+    }
+
+    cycles.insert( startPoint );
+
+    int q = prev[ startPoint ];
+    cycles.insert( q );
+
+    while ( startPoint != q )
+    {
+      q = prev[ q ];
+      cycles.insert( q );
+    }
   }
 
   std::vector< bool > visited( adj.size(), false );
@@ -224,9 +263,10 @@ void shortest_paths( vector< vector< int > > &adj,
       {
         // two cases
         // case 1: if u is not in the cycle path
-        if ( reach( adj, negV, i ) == 0 )
+        //if ( reach( adj, negV, i ) == 0 )
+        if ( cycles.find( i ) == cycles.end() )
         {
-          distance[ i ] = dist[ i ].val;
+          distance[ i ] = get_dist0( prev, s, i );
         }
         else {
           shortest[ i ] = 0;
@@ -236,7 +276,7 @@ void shortest_paths( vector< vector< int > > &adj,
       }
       else
       {
-        distance[ i ] = get_dist0( s, i );
+        distance[ i ] = get_dist0( prev0, s, i );
       }
     }
   }
