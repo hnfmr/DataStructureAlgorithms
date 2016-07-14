@@ -4,7 +4,6 @@
 #include <queue>
 #include <set>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 using std::vector;
@@ -87,7 +86,7 @@ std::set< long long > bfs( vector< vector< long long > > &adj, std::set< long lo
 }
 
 std::tuple< std::set< long long >, map< long long, Node > >
-bellman_ford( vector< vector< long long > > &adj, vector< vector< long long > > &cost, long long s )
+bellman_ford( vector< vector< long long > > &adj, const vector< vector< long long > > &cost, long long s )
 {
   map< long long, Node > dist;
   for ( unsigned long i = 0; i < adj.size(); ++i )
@@ -162,7 +161,7 @@ map< long long, Node > dijkstra( const vector< vector< long long > > &adj, const
   return dist;
 }
 
-void shortest_paths( vector< vector< long long > > &adj, vector< vector< long long > > &cost, unsigned long s,
+void shortest_paths( vector< vector< long long > > &adj, const vector< vector< long long > > &cost, unsigned long s,
                      vector< long long > &distance, vector< long long > &reachable, vector< long long > &shortest )
 {
   std::set< long long > cycles;
