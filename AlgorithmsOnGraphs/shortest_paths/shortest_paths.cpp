@@ -1,14 +1,13 @@
-#include <functional>
 #include <iostream>
 #include <limits>
 #include <queue>
 #include <set>
 #include <tuple>
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 using std::vector;
-using std::unordered_map;
+using std::map;
 using std::priority_queue;
 using std::queue;
 using std::pair;
@@ -39,8 +38,7 @@ inline bool operator>( const Node &l, const Node &r )
     return false;
 }
 
-inline bool try_relax( int u, int v, const vector< int > &,
-                       const unordered_map< int, Node > &dist,
+inline bool try_relax( int u, int v, const vector< int > &, const map< int, Node > &dist,
                        const vector< vector< int > > &cost )
 {
   auto new_w = dist.at( u ) + cost[ u ][ v ];
@@ -51,8 +49,7 @@ inline bool try_relax( int u, int v, const vector< int > &,
   return false;
 }
 
-inline bool relax( int u, int v, vector< int > &prev,
-                   unordered_map< int, Node > &dist,
+inline bool relax( int u, int v, vector< int > &prev, map< int, Node > &dist,
                    const vector< vector< int > > &cost )
 {
   auto new_w = dist[ u ] + cost[ u ][ v ];
@@ -65,11 +62,10 @@ inline bool relax( int u, int v, vector< int > &prev,
   return false;
 }
 
-std::tuple< bool, unordered_map< int, Node >, vector< int > >
-bellman_ford( vector< vector< int > > &adj, vector< vector< int > > &cost,
-              int s )
+std::tuple< bool, map< int, Node >, vector< int > > bellman_ford( vector< vector< int > > &adj,
+                                                                            vector< vector< int > > &cost, int s )
 {
-  std::unordered_map< int, Node > dist;
+  std::map< int, Node > dist;
   std::vector< int > prev( adj.size(), -1 );
   for ( size_t i = 0; i < adj.size(); ++i )
   {
@@ -108,11 +104,10 @@ bellman_ford( vector< vector< int > > &adj, vector< vector< int > > &cost,
   return std::make_tuple( false, dist, prev );
 }
 
-std::tuple< unordered_map< int, Node >, vector< int > >
-dijkstra( const vector< vector< int > > &adj,
-          const vector< vector< int > > &cost, int s )
+std::tuple< map< int, Node >, vector< int > > dijkstra( const vector< vector< int > > &adj,
+                                                                  const vector< vector< int > > &cost, int s )
 {
-  std::unordered_map< int, Node > dist;
+  std::map< int, Node > dist;
   std::vector< int > prev( adj.size(), -1 );
   for ( size_t i = 0; i < adj.size(); ++i )
   {
@@ -121,9 +116,7 @@ dijkstra( const vector< vector< int > > &adj,
 
   dist[ s ] = Node( 0 );
 
-  auto cmp = [&dist]( int left, int right ) {
-    return dist[ left ] > dist[ right ];
-  };
+  auto cmp = [&dist]( int left, int right ) { return dist[ left ] > dist[ right ]; };
 
   std::priority_queue< int, std::vector< int >, decltype( cmp ) > h( cmp );
 
@@ -153,8 +146,7 @@ dijkstra( const vector< vector< int > > &adj,
   return std::make_tuple( dist, prev );
 }
 
-void explore( const vector< vector< int > > &adj, vector< bool > &visited,
-              int v )
+void explore( const vector< vector< int > > &adj, vector< bool > &visited, int v )
 {
   visited[ v ] = true;
   const auto &es = adj[ v ];
@@ -181,18 +173,15 @@ int reach( vector< vector< int > > &adj, int x, int y )
   return 0;
 }
 
-void shortest_paths( vector< vector< int > > &adj,
-                     vector< vector< int > > &cost, int s,
-                     vector< long long > &distance, vector< int > &reachable,
-                     vector< int > &shortest )
+void shortest_paths( vector< vector< int > > &adj, vector< vector< int > > &cost, int s, vector< long long > &distance,
+                     vector< int > &reachable, vector< int > &shortest )
 {
   bool negCycle = false;
-  unordered_map< int, Node > dist;
+  map< int, Node > dist;
   vector< int > prev;
   std::tie( negCycle, dist, prev ) = bellman_ford( adj, cost, s );
 
-  auto get_dist0 = [&cost]( const vector< int > &prev, int u,
-                            int v ) -> long long {
+  auto get_dist = [&cost]( const vector< int > &prev, int u, int v ) -> long long {
     int tmp = v;
     long long sum = 0;
     while ( tmp != u )
@@ -208,13 +197,10 @@ void shortest_paths( vector< vector< int > > &adj,
     return sum;
   };
 
-  unordered_map< int, Node > dist0;
-  vector< int > prev0;
-
   std::set< int > cycles;
   if ( !negCycle )
   {
-    std::tie( dist0, prev0 ) = dijkstra( adj, cost, s );
+    std::tie( dist, prev ) = dijkstra( adj, cost, s );
   }
   else
   {
@@ -254,13 +240,7 @@ void shortest_paths( vector< vector< int > > &adj,
       continue;
     }
 
-    int r = -1;
-
-    if ( negCycle )
-      r = dist[ i ].isinf ? 0 : 1;
-    else
-      r = dist0[ i ].isinf ? 0 : 1;
-
+    int r = dist[ i ].isinf ? 0 : 1;
     reachable[ i ] = r;
 
     if ( r == 1 )
@@ -269,7 +249,7 @@ void shortest_paths( vector< vector< int > > &adj,
       {
         if ( cycles.find( i ) == cycles.end() )
         {
-          distance[ i ] = get_dist0( prev, s, i );
+          distance[ i ] = get_dist( prev, s, i );
         }
         else
         {
@@ -278,7 +258,7 @@ void shortest_paths( vector< vector< int > > &adj,
       }
       else
       {
-        distance[ i ] = get_dist0( prev0, s, i );
+        distance[ i ] = get_dist( prev, s, i );
       }
     }
   }
