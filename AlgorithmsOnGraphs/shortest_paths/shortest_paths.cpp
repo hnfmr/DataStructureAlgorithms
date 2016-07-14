@@ -4,6 +4,7 @@
 #include <set>
 #include <tuple>
 #include <vector>
+#include <cstdint>
 
 using std::vector;
 using std::map;
@@ -11,12 +12,12 @@ using std::map;
 struct Node
 {
   Node() : isinf( true ), val( 0 ) {}
-  explicit Node( long long val ) : isinf( false ), val( val ) {}
+  explicit Node( std::int64_t val ) : isinf( false ), val( val ) {}
   bool isinf;
-  long long val;
+  std::int64_t val;
 };
 
-inline Node operator+( const Node &n, long long c )
+inline Node operator+( const Node &n, std::int64_t c )
 {
   if ( n.isinf )
     return Node();
@@ -36,7 +37,7 @@ inline bool operator>( const Node &l, const Node &r )
     return false;
 }
 
-inline bool relax( long long u, long long v, map< long long, Node > &dist, const vector< vector< long long > > &cost )
+inline bool relax( std::uint32_t u, std::uint32_t v, map< std::uint32_t, Node > &dist, const vector< vector< std::int64_t > > &cost )
 {
   auto new_w = dist[ u ] + cost[ u ][ v ];
   auto &nodeV = dist[ v ];
@@ -48,7 +49,7 @@ inline bool relax( long long u, long long v, map< long long, Node > &dist, const
   return false;
 }
 
-void explore( const vector< vector< long long > > &adj, vector< bool > &visited, long long v )
+void explore( const vector< vector< std::uint32_t > > &adj, vector< bool > &visited, std::uint32_t v )
 {
   visited[ v ] = true;
   const auto &es = adj[ v ];
@@ -62,9 +63,9 @@ void explore( const vector< vector< long long > > &adj, vector< bool > &visited,
   }
 }
 
-std::set< long long > bfs( vector< vector< long long > > &adj, std::set< long long > &from )
+std::set< std::uint32_t > bfs( vector< vector< std::uint32_t > > &adj, std::set< std::uint32_t > &from )
 {
-  std::set< long long > infarbs;
+  std::set< std::uint32_t > infarbs;
 
   for ( auto f : from )
   {
@@ -72,7 +73,7 @@ std::set< long long > bfs( vector< vector< long long > > &adj, std::set< long lo
 
     explore( adj, visited, f );
 
-    for ( unsigned long i = 0; i < visited.size(); ++i )
+    for ( std::uint32_t i = 0; i < visited.size(); ++i )
     {
       if ( visited[ i ] )
         infarbs.insert( i );
@@ -81,26 +82,26 @@ std::set< long long > bfs( vector< vector< long long > > &adj, std::set< long lo
   return infarbs;
 }
 
-std::tuple< std::set< long long >, map< long long, Node > >
-bellman_ford( vector< vector< long long > > &adj, const vector< vector< long long > > &cost, long long s )
+std::tuple< std::set< std::uint32_t >, map< std::uint32_t, Node > >
+bellman_ford( vector< vector< std::uint32_t > > &adj, const vector< vector< std::int64_t > > &cost, std::uint32_t s )
 {
-  map< long long, Node > dist;
-  for ( unsigned long i = 0; i < adj.size(); ++i )
+  map< std::uint32_t, Node > dist;
+  for ( std::uint32_t i = 0; i < adj.size(); ++i )
   {
     dist[ i ] = Node();
   }
 
   dist[ s ] = Node( 0ll );
 
-  std::set< long long > cycles;
-  const unsigned long V = adj.size();
-  for ( unsigned long i = 0; i < V; ++i )
+  std::set< std::uint32_t > cycles;
+  const std::uint32_t V = adj.size();
+  for ( std::uint32_t i = 0; i < V; ++i )
   {
-    for ( unsigned long j = 0; j < adj.size(); ++j )
+    for ( std::uint32_t j = 0; j < adj.size(); ++j )
     {
-      long long u = j;
+      std::uint32_t u = j;
       const auto &es = adj[ u ];
-      for ( long long v : es )
+      for (std::uint32_t v : es )
       {
         if ( relax( u, v, dist, cost ) )
         {
@@ -116,26 +117,25 @@ bellman_ford( vector< vector< long long > > &adj, const vector< vector< long lon
   return std::make_tuple( bfs( adj, cycles ), dist );
 }
 
-void shortest_paths( vector< vector< long long > > &adj, const vector< vector< long long > > &cost, unsigned long s,
-                     vector< long long > &distance, vector< long long > &reachable, vector< long long > &shortest )
+void shortest_paths( vector< vector< std::uint32_t > > &adj, const vector< vector< std::int64_t > > &cost, std::uint32_t s,
+                     vector< std::int64_t > &distance, vector< bool > &reachable, vector< bool > &shortest )
 {
-  std::set< long long > cycles;
-  map< long long, Node > dist;
+  std::set< std::uint32_t > cycles;
+  map< std::uint32_t, Node > dist;
   std::tie( cycles, dist ) = bellman_ford( adj, cost, s );
 
-  for ( unsigned long i = 0; i < adj.size(); ++i )
+  for ( std::uint32_t i = 0; i < adj.size(); ++i )
   {
     if ( i == s )
     {
-      reachable[ i ] = 1;
+      reachable[ i ] = true;
       distance[ i ] = 0ll;
       continue;
     }
 
-    long long r = dist[ i ].isinf ? 0 : 1;
-    reachable[ i ] = r;
+    reachable[ i ] = !dist[ i ].isinf;
 
-    if ( r == 1 )
+    if ( reachable[ i ] )
     {
       if ( cycles.find( i ) == cycles.end() )
       {
@@ -143,7 +143,7 @@ void shortest_paths( vector< vector< long long > > &adj, const vector< vector< l
       }
       else
       {
-        shortest[ i ] = 0;
+        shortest[ i ] = false;
       }
     }
   }
@@ -151,15 +151,16 @@ void shortest_paths( vector< vector< long long > > &adj, const vector< vector< l
 
 int main()
 {
-  long long n, m, s;
+  std::uint32_t n, m, s;
   std::cin >> n >> m;
 
-  vector< vector< long long > > adj( n, vector< long long >() );
-  vector< vector< long long > > cost( n, vector< long long >( n, -1 ) );
+  vector< vector< std::uint32_t > > adj( n, vector< std::uint32_t >() );
+  vector< vector< std::int64_t > > cost( n, vector< std::int64_t >( n, -1 ) );
 
-  for ( long long i = 0; i < m; i++ )
+  for ( std::uint32_t i = 0; i < m; i++ )
   {
-    long long x, y, w;
+    std::uint32_t x, y;
+    std::int64_t w;
     std::cin >> x >> y >> w;
 
     adj[ x - 1 ].push_back( y - 1 );
@@ -169,11 +170,11 @@ int main()
   std::cin >> s;
   s--;
 
-  vector< long long > distance( n, std::numeric_limits< long long >::max() );
-  vector< long long > reachable( n, 0 );
-  vector< long long > shortest( n, 1 );
+  vector< std::int64_t > distance( n, std::numeric_limits< std::int64_t >::max() );
+  vector< bool > reachable( n, false );
+  vector< bool > shortest( n, true );
   shortest_paths( adj, cost, s, distance, reachable, shortest );
-  for ( long long i = 0; i < n; i++ )
+  for ( std::uint32_t i = 0; i < n; i++ )
   {
     if ( !reachable[ i ] )
     {
