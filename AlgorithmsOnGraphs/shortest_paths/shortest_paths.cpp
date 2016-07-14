@@ -1,9 +1,10 @@
 #include <iostream>
 #include <limits>
+#include <map>
 #include <queue>
 #include <set>
 #include <tuple>
-#include <map>
+#include <utility>
 #include <vector>
 
 using std::vector;
@@ -15,12 +16,12 @@ using std::pair;
 struct Node
 {
   Node() : isinf( true ), val( 0 ) {}
-  explicit Node( int val ) : isinf( false ), val( val ) {}
+  explicit Node( long long val ) : isinf( false ), val( val ) {}
   bool isinf;
-  int val;
+  long long val;
 };
 
-inline Node operator+( const Node &n, int c )
+inline Node operator+( const Node &n, long long c )
 {
   if ( n.isinf )
     return Node();
@@ -32,128 +33,33 @@ inline bool operator>( const Node &l, const Node &r )
 {
   if ( !l.isinf && !r.isinf )
     return l.val > r.val;
-  else if ( l.isinf )
+  else if ( l.isinf && !r.isinf )
     return true;
+  else if ( !l.isinf && r.isinf )
+    return false;
   else
     return false;
 }
 
-inline bool try_relax( int u, int v, const vector< int > &, const map< int, Node > &dist,
-                       const vector< vector< int > > &cost )
-{
-  auto new_w = dist.at( u ) + cost[ u ][ v ];
-  if ( dist.at( v ) > new_w )
-  {
-    return true;
-  }
-  return false;
-}
-
-inline bool relax( int u, int v, vector< int > &prev, map< int, Node > &dist,
-                   const vector< vector< int > > &cost )
+inline bool relax( long long u, long long v, map< long long, Node > &dist, const vector< vector< long long > > &cost )
 {
   auto new_w = dist[ u ] + cost[ u ][ v ];
-  if ( dist[ v ] > new_w )
+  auto &nodeV = dist[ v ];
+  if ( nodeV > new_w )
   {
-    dist[ v ] = new_w;
-    prev[ v ] = u;
+    nodeV = new_w;
     return true;
   }
   return false;
 }
 
-std::tuple< bool, map< int, Node >, vector< int > > bellman_ford( vector< vector< int > > &adj,
-                                                                            vector< vector< int > > &cost, int s )
-{
-  std::map< int, Node > dist;
-  std::vector< int > prev( adj.size(), -1 );
-  for ( size_t i = 0; i < adj.size(); ++i )
-  {
-    dist[ i ] = Node();
-  }
-
-  dist[ s ] = Node( 0 );
-
-  int V = adj.size();
-  for ( int i = 0; i < V - 1; ++i )
-  {
-    bool changed = false;
-    for ( size_t j = 0; j < adj.size(); ++j )
-    {
-      int u = j;
-      const auto &es = adj[ u ];
-      for ( int v : es )
-      {
-        changed |= relax( u, v, prev, dist, cost );
-      }
-    }
-    if ( !changed )
-      break;
-  }
-
-  for ( size_t j = 0; j < adj.size(); ++j )
-  {
-    int u = j;
-    const auto &es = adj[ u ];
-    for ( int v : es )
-    {
-      if ( try_relax( u, v, prev, dist, cost ) )
-        return std::make_tuple( true, dist, prev );
-    }
-  }
-  return std::make_tuple( false, dist, prev );
-}
-
-std::tuple< map< int, Node >, vector< int > > dijkstra( const vector< vector< int > > &adj,
-                                                                  const vector< vector< int > > &cost, int s )
-{
-  std::map< int, Node > dist;
-  std::vector< int > prev( adj.size(), -1 );
-  for ( size_t i = 0; i < adj.size(); ++i )
-  {
-    dist[ i ] = Node();
-  }
-
-  dist[ s ] = Node( 0 );
-
-  auto cmp = [&dist]( int left, int right ) { return dist[ left ] > dist[ right ]; };
-
-  std::priority_queue< int, std::vector< int >, decltype( cmp ) > h( cmp );
-
-  for ( size_t i = 0; i < adj.size(); ++i )
-  {
-    h.push( i );
-  }
-
-  while ( !h.empty() )
-  {
-    int u = h.top();
-    h.pop();
-
-    const auto &edges = adj[ u ];
-    for ( auto v : edges )
-    {
-      int w = cost[ u ][ v ];
-      if ( dist[ v ] > ( dist[ u ] + w ) )
-      {
-        dist[ v ] = dist[ u ] + w;
-        prev[ v ] = u;
-        h.push( v );
-      }
-    }
-  }
-
-  return std::make_tuple( dist, prev );
-}
-
-void explore( const vector< vector< int > > &adj, vector< bool > &visited, int v )
+void explore( const vector< vector< long long > > &adj, vector< bool > &visited, long long v )
 {
   visited[ v ] = true;
   const auto &es = adj[ v ];
 
   for ( const auto &w : es )
   {
-
     if ( !visited[ w ] )
     {
       explore( adj, visited, w );
@@ -161,95 +67,132 @@ void explore( const vector< vector< int > > &adj, vector< bool > &visited, int v
   }
 }
 
-int reach( vector< vector< int > > &adj, int x, int y )
+std::set< long long > bfs( vector< vector< long long > > &adj, std::set< long long > &from )
 {
-  std::vector< bool > visited( adj.size(), false );
+  std::set< long long > infarbs;
 
-  explore( adj, visited, x );
+  for ( auto f : from )
+  {
+    std::vector< bool > visited( adj.size(), false );
 
-  if ( visited[ y ] )
-    return 1;
+    explore( adj, visited, f );
 
-  return 0;
+    for ( unsigned long i = 0; i < visited.size(); ++i )
+    {
+      if ( visited[ i ] )
+        infarbs.insert( i );
+    }
+  }
+  return infarbs;
 }
 
-void shortest_paths( vector< vector< int > > &adj, vector< vector< int > > &cost, int s, vector< long long > &distance,
-                     vector< int > &reachable, vector< int > &shortest )
+std::tuple< std::set< long long >, map< long long, Node > >
+bellman_ford( vector< vector< long long > > &adj, vector< vector< long long > > &cost, long long s )
 {
-  bool negCycle = false;
-  map< int, Node > dist;
-  vector< int > prev;
-  std::tie( negCycle, dist, prev ) = bellman_ford( adj, cost, s );
-
-  auto get_dist = [&cost]( const vector< int > &prev, int u, int v ) -> long long {
-    int tmp = v;
-    long long sum = 0;
-    while ( tmp != u )
-    {
-      if ( tmp == -1 || prev[ tmp ] == -1 )
-        return -1;
-      int w = cost[ prev[ tmp ] ][ tmp ];
-      if ( w == -1 )
-        return -1;
-      sum += w;
-      tmp = prev[ tmp ];
-    }
-    return sum;
-  };
-
-  std::set< int > cycles;
-  if ( !negCycle )
+  map< long long, Node > dist;
+  for ( unsigned long i = 0; i < adj.size(); ++i )
   {
-    std::tie( dist, prev ) = dijkstra( adj, cost, s );
+    dist[ i ] = Node();
   }
-  else
+
+  dist[ s ] = Node( 0ll );
+
+  std::set< long long > cycles;
+  const unsigned long V = adj.size();
+  for ( unsigned long i = 0; i < V; ++i )
   {
-    int startPoint = -1;
-    for ( size_t j = 0; j < adj.size(); ++j )
+    for ( unsigned long j = 0; j < adj.size(); ++j )
     {
-      int u = j;
+      long long u = j;
       const auto &es = adj[ u ];
-      for ( int v : es )
+      for ( long long v : es )
       {
-        if ( try_relax( u, v, prev, dist, cost ) )
+        if ( relax( u, v, dist, cost ) )
         {
-          startPoint = u;
-          break;
+          if ( i == ( V - 1 ) )
+          {
+            cycles.insert( v );
+          }
         }
       }
     }
+  }
 
-    cycles.insert( startPoint );
+  return std::make_tuple( bfs( adj, cycles ), dist );
+}
 
-    int q = prev[ startPoint ];
-    cycles.insert( q );
+map< long long, Node > dijkstra( const vector< vector< long long > > &adj, const vector< vector< long long > > &cost,
+                                 long long s )
+{
+  map< long long, Node > dist;
+  for ( unsigned long i = 0; i < adj.size(); ++i )
+  {
+    dist[ i ] = Node();
+  }
 
-    while ( startPoint != q )
+  dist[ s ] = Node( 0ll );
+
+  auto cmp = [&dist]( long long left, long long right ) { return dist[ left ] > dist[ right ]; };
+
+  std::priority_queue< long long, std::vector< long long >, decltype( cmp ) > h( cmp );
+
+  for ( unsigned long i = 0; i < adj.size(); ++i )
+  {
+    h.push( i );
+  }
+
+  while ( !h.empty() )
+  {
+    long long u = h.top();
+    h.pop();
+
+    const auto &edges = adj[ u ];
+    for ( auto v : edges )
     {
-      q = prev[ q ];
-      cycles.insert( q );
+      long long w = cost[ u ][ v ];
+      auto n = dist[ u ] + w;
+      if ( dist[ v ] > n )
+      {
+        dist[ v ] = n;
+        h.push( v );
+      }
     }
   }
 
-  for ( size_t i = 0; i < adj.size(); ++i )
+  return dist;
+}
+
+void shortest_paths( vector< vector< long long > > &adj, vector< vector< long long > > &cost, unsigned long s,
+                     vector< long long > &distance, vector< long long > &reachable, vector< long long > &shortest )
+{
+  std::set< long long > cycles;
+  map< long long, Node > dist;
+  std::tie( cycles, dist ) = bellman_ford( adj, cost, s );
+
+  if ( cycles.empty() )
+  {
+    dist = dijkstra( adj, cost, s );
+  }
+
+  for ( unsigned long i = 0; i < adj.size(); ++i )
   {
     if ( i == s )
     {
       reachable[ i ] = 1;
-      distance[ i ] = 0;
+      distance[ i ] = 0ll;
       continue;
     }
 
-    int r = dist[ i ].isinf ? 0 : 1;
+    long long r = dist[ i ].isinf ? 0 : 1;
     reachable[ i ] = r;
 
     if ( r == 1 )
     {
-      if ( negCycle )
+      if ( !cycles.empty() )
       {
         if ( cycles.find( i ) == cycles.end() )
         {
-          distance[ i ] = get_dist( prev, s, i );
+          distance[ i ] = dist[ i ].val;
         }
         else
         {
@@ -258,7 +201,7 @@ void shortest_paths( vector< vector< int > > &adj, vector< vector< int > > &cost
       }
       else
       {
-        distance[ i ] = get_dist( prev, s, i );
+        distance[ i ] = dist[ i ].val;
       }
     }
   }
@@ -266,26 +209,29 @@ void shortest_paths( vector< vector< int > > &adj, vector< vector< int > > &cost
 
 int main()
 {
-  int n, m, s;
+  long long n, m, s;
   std::cin >> n >> m;
 
-  vector< vector< int > > adj( n, vector< int >() );
-  vector< vector< int > > cost( n, vector< int >( n, -1 ) );
+  vector< vector< long long > > adj( n, vector< long long >() );
+  vector< vector< long long > > cost( n, vector< long long >( n, -1 ) );
 
-  for ( int i = 0; i < m; i++ )
+  for ( long long i = 0; i < m; i++ )
   {
-    int x, y, w;
+    long long x, y, w;
     std::cin >> x >> y >> w;
+
     adj[ x - 1 ].push_back( y - 1 );
     cost[ x - 1 ][ y - 1 ] = w;
   }
+
   std::cin >> s;
   s--;
+
   vector< long long > distance( n, std::numeric_limits< long long >::max() );
-  vector< int > reachable( n, 0 );
-  vector< int > shortest( n, 1 );
+  vector< long long > reachable( n, 0 );
+  vector< long long > shortest( n, 1 );
   shortest_paths( adj, cost, s, distance, reachable, shortest );
-  for ( int i = 0; i < n; i++ )
+  for ( long long i = 0; i < n; i++ )
   {
     if ( !reachable[ i ] )
     {
