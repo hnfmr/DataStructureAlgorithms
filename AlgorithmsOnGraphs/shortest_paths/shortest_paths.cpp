@@ -1,16 +1,12 @@
 #include <iostream>
 #include <limits>
 #include <map>
-#include <queue>
 #include <set>
 #include <tuple>
 #include <vector>
 
 using std::vector;
 using std::map;
-using std::priority_queue;
-using std::queue;
-using std::pair;
 
 struct Node
 {
@@ -120,58 +116,12 @@ bellman_ford( vector< vector< long long > > &adj, const vector< vector< long lon
   return std::make_tuple( bfs( adj, cycles ), dist );
 }
 
-map< long long, Node > dijkstra( const vector< vector< long long > > &adj, const vector< vector< long long > > &cost,
-                                 long long s )
-{
-  map< long long, Node > dist;
-  for ( unsigned long i = 0; i < adj.size(); ++i )
-  {
-    dist[ i ] = Node();
-  }
-
-  dist[ s ] = Node( 0ll );
-
-  auto cmp = [&dist]( long long left, long long right ) { return dist[ left ] > dist[ right ]; };
-
-  std::priority_queue< long long, std::vector< long long >, decltype( cmp ) > h( cmp );
-
-  for ( unsigned long i = 0; i < adj.size(); ++i )
-  {
-    h.push( i );
-  }
-
-  while ( !h.empty() )
-  {
-    long long u = h.top();
-    h.pop();
-
-    const auto &edges = adj[ u ];
-    for ( auto v : edges )
-    {
-      long long w = cost[ u ][ v ];
-      auto n = dist[ u ] + w;
-      if ( dist[ v ] > n )
-      {
-        dist[ v ] = n;
-        h.push( v );
-      }
-    }
-  }
-
-  return dist;
-}
-
 void shortest_paths( vector< vector< long long > > &adj, const vector< vector< long long > > &cost, unsigned long s,
                      vector< long long > &distance, vector< long long > &reachable, vector< long long > &shortest )
 {
   std::set< long long > cycles;
   map< long long, Node > dist;
   std::tie( cycles, dist ) = bellman_ford( adj, cost, s );
-
-  if ( cycles.empty() )
-  {
-    dist = dijkstra( adj, cost, s );
-  }
 
   for ( unsigned long i = 0; i < adj.size(); ++i )
   {
@@ -187,20 +137,13 @@ void shortest_paths( vector< vector< long long > > &adj, const vector< vector< l
 
     if ( r == 1 )
     {
-      if ( !cycles.empty() )
+      if ( cycles.find( i ) == cycles.end() )
       {
-        if ( cycles.find( i ) == cycles.end() )
-        {
-          distance[ i ] = dist[ i ].val;
-        }
-        else
-        {
-          shortest[ i ] = 0;
-        }
+        distance[ i ] = dist[ i ].val;
       }
       else
       {
-        distance[ i ] = dist[ i ].val;
+        shortest[ i ] = 0;
       }
     }
   }
