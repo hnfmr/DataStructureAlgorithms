@@ -1,0 +1,1 @@
+add_executable(non_shared_substring non_shared_substring.cpp)

@@ -1,0 +1,1 @@
+add_executable(trie_matching trie_matching.cpp)

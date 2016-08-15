@@ -1,0 +1,1 @@
+add_executable(suffix_tree_from_array suffix_tree_from_array.cpp)

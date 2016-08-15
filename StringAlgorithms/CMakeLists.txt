@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.2)
+
+project(DataStructures)
+
+if (UNIX)
+    set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
+    set(CMAKE_CXX_FLAGS "-Wall -pipe -O2 -std=c++14")
+endif(UNIX)
+
+add_subdirectory("bwmatching")
+add_subdirectory("bwt")
+add_subdirectory("bwtinverse")
+add_subdirectory("kmp")
+add_subdirectory("non_shared_substring")
+add_subdirectory("suffix_array")
+add_subdirectory("suffix_array_long")
+add_subdirectory("suffix_array_matching")
+add_subdirectory("suffix_tree")
+add_subdirectory("trie")
+add_subdirectory("trie_matching")
+add_subdirectory("trie_matching_extended")

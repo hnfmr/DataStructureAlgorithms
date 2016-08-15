@@ -1,0 +1,1 @@
+add_executable(suffix_array_matching suffix_array_matching.cpp)
