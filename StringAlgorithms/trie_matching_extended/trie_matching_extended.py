@@ -12,7 +12,6 @@ def outgoing_edge(tree, node_id, symbol):
 def build_trie(patterns):
     tree = dict()
     # write your code here
-    root = 0
     tree[0] = Node()
     max_node = 0
     for pattern in patterns:
@@ -39,13 +38,6 @@ def build_trie(patterns):
 
     return tree
 
-
-#NA = -1
-
-
-#class Node:
-#    def __init__(self):
-#        self.next = [NA] * 4
 
 class Node:
     def __init__(self, pattern=None, children=None):
